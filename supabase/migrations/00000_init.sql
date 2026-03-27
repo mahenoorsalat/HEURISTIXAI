@@ -1,5 +1,5 @@
 -- Create waitlist table
-CREATE TABLE public.waitlist (
+CREATE TABLE IF NOT EXISTS public.waitlist (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
     name text NOT NULL,
     email text NOT NULL,
@@ -15,11 +15,16 @@ CREATE TABLE public.waitlist (
 );
 
 -- Self-referencing foreign key for referrals
-ALTER TABLE public.waitlist
-    ADD CONSTRAINT waitlist_referred_by_fkey FOREIGN KEY (referred_by) REFERENCES public.waitlist(referral_code) ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waitlist_referred_by_fkey') THEN
+        ALTER TABLE public.waitlist
+            ADD CONSTRAINT waitlist_referred_by_fkey FOREIGN KEY (referred_by) REFERENCES public.waitlist(referral_code) ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- Create announcements table
-CREATE TABLE public.announcements (
+CREATE TABLE IF NOT EXISTS public.announcements (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
     message text NOT NULL,
     active boolean NOT NULL DEFAULT true,
@@ -28,7 +33,7 @@ CREATE TABLE public.announcements (
 );
 
 -- Admin users table
-CREATE TABLE public.admins (
+CREATE TABLE IF NOT EXISTS public.admins (
     user_id uuid NOT NULL,
     CONSTRAINT admins_pkey PRIMARY KEY (user_id)
 );
@@ -60,18 +65,19 @@ ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 
 -- Waitlist Policies
 -- Anyone can insert a new waitlist entry
+DROP POLICY IF EXISTS "Public can insert waitlist" ON public.waitlist;
 CREATE POLICY "Public can insert waitlist" 
     ON public.waitlist FOR INSERT 
     WITH CHECK (status = 'pending');
 
 -- Public users can only read their own data via email match (though typically we use the RPC for this)
+DROP POLICY IF EXISTS "Public can read own waitlist entry" ON public.waitlist;
 CREATE POLICY "Public can read own waitlist entry" 
     ON public.waitlist FOR SELECT 
-    -- If using auth, it would be auth.email(), but for anon forms, we rely on the RPC to bypass this.
-    -- However, we can allow reading basic info if needed. We'll leave it restricted and use RPC.
     USING (false);
 
 -- Admins can do everything on waitlist
+DROP POLICY IF EXISTS "Admins full access waitlist" ON public.waitlist;
 CREATE POLICY "Admins full access waitlist" 
     ON public.waitlist FOR ALL 
     TO authenticated 
@@ -79,11 +85,13 @@ CREATE POLICY "Admins full access waitlist"
 
 -- Announcements Policies
 -- Anyone can read active announcements
+DROP POLICY IF EXISTS "Public can read active announcements" ON public.announcements;
 CREATE POLICY "Public can read active announcements" 
     ON public.announcements FOR SELECT 
     USING (active = true);
 
 -- Admins can do everything on announcements
+DROP POLICY IF EXISTS "Admins full access announcements" ON public.announcements;
 CREATE POLICY "Admins full access announcements" 
     ON public.announcements FOR ALL 
     TO authenticated 
@@ -91,6 +99,7 @@ CREATE POLICY "Admins full access announcements"
 
 -- Admins Policies
 -- Admins can read the admins table
+DROP POLICY IF EXISTS "Admins read admins" ON public.admins;
 CREATE POLICY "Admins read admins" 
     ON public.admins FOR SELECT 
     TO authenticated 
