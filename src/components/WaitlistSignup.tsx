@@ -73,7 +73,15 @@ const WaitlistSignup = () => {
             });
             
             if (posData?.status === 'approved') {
-               setError("You're already in! Access Granted. 🎉");
+               // Instead of error, show success screen
+               setReferralCode(posData.referral_code);
+               setPosition(0); // 0 indicates Access Granted
+               setSuccess(true);
+               toast({
+                 title: "Welcome back! 🎉",
+                 description: "You've already been granted access.",
+               });
+               return;
             } else {
                setError("This email is already on the waitlist.");
             }
@@ -227,10 +235,15 @@ const WaitlistSignup = () => {
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-4">
                   <Check size={20} className="text-primary" />
                 </div>
-                <h3 className="text-2xl font-serif text-foreground">You're In!</h3>
+                <h3 className="text-2xl font-serif text-foreground">
+                  {position === 0 ? "Access Granted!" : "You're In!"}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  You're <span className="text-primary font-semibold">#{position}</span> in the queue.
-                  Share your referral link to move up faster.
+                  {position === 0 ? (
+                    <>Welcome to the inner circle. Your early access is now <span className="text-primary font-semibold">active</span>.</>
+                  ) : (
+                    <>You're <span className="text-primary font-semibold">#{position}</span> in the queue. Share your referral link to move up faster.</>
+                  )}
                 </p>
 
                 <div className="border border-border p-4 space-y-3">

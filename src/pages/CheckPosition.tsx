@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, Loader2, Search, Users, Hash, Megaphone } from "lucide-react";
+import { ArrowUpRight, Loader2, Search, Users, Hash, Megaphone, Check } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabase";
@@ -135,11 +135,17 @@ const CheckPosition = () => {
                 {/* Stats cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="border border-border p-6 text-center flex flex-col justify-center min-h-[140px]">
-                    <Hash size={16} className="mx-auto mb-3 text-muted-foreground" />
                     {result.status === 'approved' ? (
-                      <p className="text-xl md:text-2xl font-serif text-primary uppercase tracking-widest font-bold">Access Granted</p>
+                      <>
+                        <div className="mx-auto mb-3 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Check size={18} className="text-primary" />
+                        </div>
+                        <p className="text-xl md:text-2xl font-serif text-primary uppercase tracking-widest font-bold">Access Granted</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-2">Welcome to the inner circle</p>
+                      </>
                     ) : (
                       <>
+                        <Hash size={16} className="mx-auto mb-3 text-muted-foreground" />
                         <p className="text-3xl font-serif text-primary">#{result.position}</p>
                         <p className="text-label mt-2">Queue Position</p>
                       </>
