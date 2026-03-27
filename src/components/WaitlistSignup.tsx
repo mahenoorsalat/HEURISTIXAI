@@ -97,7 +97,7 @@ const WaitlistSignup = () => {
       });
 
       setReferralCode(code);
-      setPosition(posData?.position || 1);
+      setPosition(posData?.status === 'approved' ? 0 : (posData?.position || 1));
       setSuccess(true);
       toast({
         title: "You're on the list! 🎉",
