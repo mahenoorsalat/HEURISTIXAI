@@ -67,7 +67,16 @@ const WaitlistSignup = () => {
 
       if (insertRes.error) {
         if (insertRes.error.code === '23505') {
-            setError("This email is already on the waitlist.");
+            // Check if they are actually approved
+            const { data: posData } = await supabase.rpc('get_waitlist_status', {
+              user_email: email.trim().toLowerCase()
+            });
+            
+            if (posData?.status === 'approved') {
+               setError("You're already in! Access Granted. 🎉");
+            } else {
+               setError("This email is already on the waitlist.");
+            }
         } else {
             setError("A network error occurred. Please try again. " + insertRes.error.message);
         }
