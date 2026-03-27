@@ -35,14 +35,6 @@ CREATE TABLE public.admins (
 
 -- View to compute position and referral count dynamically
 CREATE OR REPLACE VIEW public.waitlist_with_position WITH (security_invoker=true) AS
-WITH referral_counts AS (
-    SELECT 
-        w.id,
-        count(r.id) AS referral_count
-    FROM public.waitlist w
-    LEFT JOIN public.waitlist r ON r.referred_by = w.referral_code AND r.status != 'removed'
-    GROUP BY w.id
-)
 SELECT 
     w.id,
     w.name,
@@ -52,10 +44,14 @@ SELECT
     w.status,
     w.created_at,
     w.manual_bonus,
-    COALESCE(rc.referral_count, 0) as referral_count,
-    row_number() OVER (ORDER BY COALESCE(rc.referral_count, 0) + w.manual_bonus DESC, w.created_at ASC) AS position
+    (SELECT count(*) FROM public.waitlist r WHERE r.referred_by = w.referral_code AND r.status != 'removed') as referral_count,
+    row_number() OVER (
+        ORDER BY 
+            ((SELECT count(*) FROM public.waitlist r WHERE r.referred_by = w.referral_code AND r.status != 'removed') + w.manual_bonus) DESC, 
+            w.created_at ASC
+    ) AS position
 FROM public.waitlist w
-JOIN referral_counts rc ON w.id = rc.id;
+WHERE w.status != 'removed';
 
 -- Enable Row Level Security
 ALTER TABLE public.waitlist ENABLE ROW LEVEL SECURITY;
