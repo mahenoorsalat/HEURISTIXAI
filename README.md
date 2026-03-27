@@ -1,59 +1,57 @@
-# HeuristixAI Waitlist Platform
+# HeuristixAI Waitlist & Early Access Platform
 
-A production-ready full-stack web application for HeuristixAI product waitlists.
+A production-ready, full-stack waitlist application built for HeuristixAI. It features dynamic queue positioning, a robust referral loop, active broadcast announcements, and a fully secured internal Admin Dashboard.
 
-## Project Structure
+## Features & Architecture
+- **Dynamic Referral Queue:** Users are assigned positions dynamically based on timestamp and total successful referrals.
+- **Admin Dashboard (Protected by Supabase Auth):** Admins can manage users, adjust positions natively (manual bonus), and broadcast live announcements to the public position checker.
+- **Micro-animations & Fluid UI:** Fully responsive light-mode interface built with Tailwind CSS, Lucide icons, and Framer Motion layout animations.
+- **Secure Backend:** Implements strict Postgres Row Level Security (RLS) and custom Data Views to ensure the `service_role` credential is never exposed client-side.
+- **1-Click CSV Export:** Natively parse waitlist metrics to structured CSV files securely within the admin panel.
 
-This project is built using:
-- **Vite** (React, TypeScript)
-- **Tailwind CSS** (Custom generic tokens & shadcn/ui components)
-- **Supabase** (Postgres, Auth, complete RLS)
-- **Vercel** (Deployment target)
+## Tech Stack
+- Frontend: React / Vite
+- Styling: Tailwind CSS + Shadcn design patterns
+- Animation: Framer Motion
+- Backend: Supabase (PostgreSQL, Auth, RLS)
+- Deployment: Vercel
 
-## Architecture Notes
+## Setup Instructions
 
-### Security & Backend Approach
-The prompt mentioned routing admin operations through "secure server-side API routes using the service role key". Because this project is bootstrapped as a **Vite pure SPA** (Single Page Application) instead of Next.js, implementing Next.js-style API Routes is not natively supported without Vercel Serverless Functions (`api/` directory) which break standard Vite local development `npm run dev` flow.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/mahenoorsalat/HEURISTIXAI.git
+   cd HEURISTIXAI
+   npm install
+   ```
 
-Therefore, this project strictly adheres to the **"Modern Supabase Way"**:
-1. **Zero Service Role Key Exposure**: The service role key is entirely avoided on the client side. We only use the `anon` public key.
-2. **Robust Row Level Security (RLS)**: The database handles all security at the row level via authenticated identities. The `admins` table ensures that only verified admin `uuid`s can modify waitlist operations.
-3. **Secure RPCs**: Complex operations like dynamically resolving queue positions for anonymous users are implemented via secure Postgres `SECURITY DEFINER` RPCs (`get_waitlist_status`) to bypass RLS securely inside the database without leaking table data to the public.
+2. **Supabase Configuration:**
+   - Create a new project in your Supabase dashboard.
+   - Go to the **SQL Editor** and paste the entire contents of `/supabase/migrations/00000_init.sql` to generate the schemas, relationships, views, and RLS policies.
+   - Go to Authentication > Users, and create your Admin user (e.g. `admin@heuristixai.com`).
+   - Copy their `User UID`, go to the Table Editor, and insert their UID into the `admins` table.
 
-This guarantees perfect security without sacrificing the fast, uncoupled Vite development workflow.
+3. **Environment Variables:**
+   Create a `.env.local` file in the root directory and add your absolute keys securely:
+   ```env
+   VITE_SUPABASE_URL=your_project_url
+   VITE_SUPABASE_ANON_KEY=your_anon_key
+   ```
+   *(Note: Never place the Service Role key in this file).*
 
-## Getting Started
+4. **Run Locally:**
+   ```bash
+   npm run dev
+   ```
 
-### 1. Supabase Setup
-1. Create a new Supabase project.
-2. Go to SQL Editor and run the migration up script located at `supabase/migrations/00000_init.sql`. This sets up:
-   - Tables (`waitlist`, `announcements`, `admins`)
-   - Views (`waitlist_with_position`)
-   - Functions (`get_waitlist_status`)
-   - RLS Rules and referential integrity.
-3. Once created, go to **Authentication > Users** in Supabase and create your Admin user (e.g. `admin@heuristixai.com`).
-4. Copy the newly created user's `uuid`, go to the `admins` table, and insert a new row with that `uuid`. This grants admin capabilities.
+5. **Deploy to Vercel:**
+   Connect your GitHub repository to Vercel. Ensure you add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your Vercel Environment Variables before the initial build.
 
-### 2. Environment Variables
-Create a `.env.local` in the project root:
+## Database Schema Highlights
+- `waitlist`: Primary user table with an explicit self-referencing foreign key on `referral_code` to `referred_by`.
+- `announcements`: Tracks admin broadcast messages with `active` boolean toggles.
+- `admins`: Access list for privileged accounts; relies wholly on user mapping from `auth.users`.
+- `waitlist_with_position (VIEW)`: Calculates live accurate rankings instantly relying on native Postgres Row_Number() partitioned windows.
 
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhb...
-```
-
-### 3. Running Locally
-```bash
-npm install
-npm run dev
-```
-
-### 4. Deployment to Vercel
-Push your repository to GitHub, connect it to Vercel, and add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables. No serverless function configuration is needed.
-
-## Features Implemented
-- **Landing Page**: Animated hero, value props, signup form.
-- **Referral Logic**: Signup creates unique `hx-XXXXXX` code, referrals are captured via `?ref=` and properly foreign-keyed.
-- **Dynamic Position**: A Postgres view automatically sorts positions by `referral count + manual_bonus DESC`, then `created_at ASC`.
-- **Position Checker**: Users can enter their email and query the `get_waitlist_status` RPC to view live placement and active announcements.
-- **Admin Dashboard**: Supabase password authentication. View full waitlist, change status, adjust positions (`manual_bonus`), publish announcements, and export valid `.csv` blobs directly from the browser.
+## Live Demo
+[Insert Complete Vercel Link Here]
