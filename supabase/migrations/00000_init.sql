@@ -111,6 +111,7 @@ BEGIN
     'referral_count', referral_count,
     'referral_code', referral_code,
     'status', status,
+    'manual_bonus', manual_bonus,
     'created_at', created_at
   ) INTO result
   FROM public.waitlist_with_position

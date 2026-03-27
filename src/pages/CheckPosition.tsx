@@ -14,6 +14,7 @@ const CheckPosition = () => {
     referralCount: number;
     referralCode: string;
     status: string;
+    manualBonus: number;
     announcement?: string;
   } | null>(null);
   const [error, setError] = useState("");
@@ -55,6 +56,7 @@ const CheckPosition = () => {
         referralCount: data.referral_count,
         referralCode: data.referral_code,
         status: data.status,
+        manualBonus: data.manual_bonus,
         announcement: announcementData && announcementData.length > 0 ? announcementData[0].message : undefined,
       });
     } catch {
@@ -158,7 +160,9 @@ const CheckPosition = () => {
                   </div>
                   <div className="border border-border p-6 text-center">
                     <ArrowUpRight size={16} className="mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-3xl font-serif text-foreground">{result.referralCount * 3}</p>
+                    <p className="text-3xl font-serif text-foreground">
+                      {(result.referralCount * 3) + (result.manualBonus || 0)}
+                    </p>
                     <p className="text-label mt-2">Positions Gained</p>
                   </div>
                 </div>
