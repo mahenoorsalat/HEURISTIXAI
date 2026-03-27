@@ -16,11 +16,24 @@ const WaitlistSignup = () => {
   const [error, setError] = useState("");
   const { toast } = useToast();
 
-  // Get referral from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const referredBy = urlParams.get("ref") || "";
+  // Get referral from URL or Storage
+  const [referredBy, setReferredBy] = useState("");
 
   useState(() => {
+    // 1. Check URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refFromUrl = urlParams.get("ref");
+    
+    // 2. Check Storage
+    const refFromStorage = sessionStorage.getItem("hx_referral");
+    
+    if (refFromUrl) {
+      setReferredBy(refFromUrl);
+      sessionStorage.setItem("hx_referral", refFromUrl);
+    } else if (refFromStorage) {
+      setReferredBy(refFromStorage);
+    }
+    
     const fetchCount = async () => {
       const { count } = await supabase
         .from('waitlist')
