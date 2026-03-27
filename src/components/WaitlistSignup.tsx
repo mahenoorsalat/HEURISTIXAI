@@ -12,12 +12,23 @@ const WaitlistSignup = () => {
   const [referralCode, setReferralCode] = useState("");
   const [position, setPosition] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [waitlistCount, setWaitlistCount] = useState(0);
   const [error, setError] = useState("");
   const { toast } = useToast();
 
   // Get referral from URL
   const urlParams = new URLSearchParams(window.location.search);
   const referredBy = urlParams.get("ref") || "";
+
+  useState(() => {
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from('waitlist')
+        .select('*', { count: 'exact', head: true });
+      if (count) setWaitlistCount(1200 + count); // 1200 base + live database count
+    };
+    fetchCount();
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,7 +156,9 @@ const WaitlistSignup = () => {
             </p>
             <div className="flex items-center gap-6">
               <div>
-                <p className="text-2xl font-serif text-primary">8K+</p>
+                <p className="text-2xl font-serif text-primary">
+                  {waitlistCount > 0 ? `${(waitlistCount / 1000).toFixed(1)}K+` : "..."}
+                </p>
                 <p className="text-label mt-1">Already Waiting</p>
               </div>
               <div className="w-px h-10 bg-border" />
